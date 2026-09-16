@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Лаборатория КПД - Физика 8 класс</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    min-height: 100vh;
+    color: #fff;
+    padding: 20px;
+  }
+  .stars {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: -1;
+    background-image: 
+      radial-gradient(2px 2px at 20px 30px, #fff, transparent),
+      radial-gradient(1px 1px at 40px 70px, #fff, transparent),
+      radial-gradient(1px 1px at 90px 40px, #fff, transparent);
+    background-size: 200px 200px;
+    animation: starsMove 100s linear infinite;
+    opacity: 0.5;
+  }
+  @keyframes starsMove { from { transform: translateY(0); } to { transform: translateY(-200px); } }
+  
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: rgba(10, 20, 40, 0.95);
+    border: 2px solid #00d4ff;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 0 40px rgba(0, 212, 255, 0.3);
+  }
+  
+  h1 {
+    text-align: center;
+    font-size: 2.2em;
+    background: linear-gradient(135deg, #00d4ff, #0096ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 10px;
+  }
+  .subtitle { text-align: center; color: #00d4ff; margin-bottom: 25px; }
+  
+  .screen { display: none; animation: fadeIn 0.5s; }
+  .screen.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  
+  .start-panel {
+    background: rgba(0, 212, 255, 0.1);
+    border: 2px solid #00d4ff;
+    border-radius: 15px;
+    padding: 30px;
+    text-align: center;
+  }
+  
+  .level-info {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin: 25px 0;
+  }
+  .level-card {
+    background: rgba(0, 212, 255, 0.1);
+    border: 2px solid #00d4ff;
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+  }
+  .level-card.level-a { border-color: #4CAF50; background: rgba(76, 175, 80, 0.1); }
+  .level-card.level-b { border-color: #FF9800; background: rgba(255, 152, 0, 0.1); }
+  .level-card.level-c { border-color: #f44336; background: rgba(244, 67, 54, 0.1); }
+  .level-card h3 { font-size: 1.3em; margin-bottom: 8px; }
+  .level-card p { font-size: 0.9em; color: #a0d4ff; }
+  .level-card .points { font-weight: bold; color: #FFD54F; font-size: 1.1em; margin-top: 5px; }
+  
+  .input-group {
+    margin: 20px 0;
+    text-align: left;
+  }
+  .input-group label {
+    display: block;
+    color: #00d4ff;
+    margin-bottom: 8px;
+    font-size: 1.1em;
+  }
+  .input-group input {
+    width: 100%;
+    padding: 12px;
+    font-size: 1.1em;
+    background: rgba(0, 212, 255, 0.1);
+    border: 2px solid #00d4ff;
+    border-radius: 8px;
+    color: #fff;
+  }
+  .input-group input:focus {
+    outline: none;
+    border-color: #00ff88;
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+  }
+  
+  .btn {
+    background: linear-gradient(135deg, #00d4ff, #0096ff);
+    color: #000;
+    border: none;
+    padding: 15px 40px;
+    font-size: 1.2em;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    margin: 10px 5px;
+    transition: all 0.3s;
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+  }
+  .btn:hover { transform: translateY(-3px); box-shadow: 0 5px 30px rgba(0, 212, 255, 0.6); }
+  .btn-teacher { background: linear-gradient(135deg, #FFD54F, #FFA726); margin-top: 15px; }
+  
+  .game-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+  .stat-box {
+    background: rgba(0, 212, 255, 0.1);
+    border: 2px solid #00d4ff;
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+  }
+  .stat-box.warning {
+    animation: pulse 0.5s ease-in-out infinite;
+    border-color: #ff3333;
+    background: rgba(255, 50, 50, 0.2);
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(255, 100, 100, 0.4); }
+    50% { box-shadow: 0 0 40px rgba(255, 50, 50, 0.8); }
+  }
+  .stat-label { color: #00d4ff; font-size: 0.9em; margin-bottom: 5px; }
+  .stat-value { font-size: 1.6em; font-weight: bold; }
+  
+  .task-container {
+    background: rgba(0, 212, 255, 0.05);
+    border: 2px solid #00d4ff;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 20px;
+  }
+  .task-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid rgba(0, 212, 255, 0.3);
+  }
+  .task-level {
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 1.1em;
+  }
+  .task-level.a { background: #4CAF50; color: white; }
+  .task-level.b { background: #FF9800; color: white; }
+  .task-level.c { background: #f44336; color: white; }
+  
+  .task-number {
+    color: #00d4ff;
+    font-size: 1.3em;
+    font-weight: bold;
+  }
+  
+  .task-text {
+    font-size: 1.2em;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-left: 4px solid #00d4ff;
+    border-radius: 5px;
+  }
+  
+  .formula-box {
+    background: rgba(255, 249, 196, 0.2);
+    border: 2px solid #FFD54F;
+    padding: 15px;
+    text-align: center;
+    border-radius: 10px;
+    margin: 15px 0;
+    font-size: 1.1em;
+  }
+  .formula {
+    font-size: 1.4em;
+    font-weight: bold;
+    color: #FFD54F;
+  }
+  
+  .answer-input {
+    width: 100%;
+    padding: 15px;
+    font-size: 1.2em;
+    background: rgba(0, 212, 255, 0.1);
+    border: 2px solid #00d4ff;
+    border-radius: 10px;
+    color: #fff;
+    margin: 15px 0;
+    text-align: center;
+  }
+  .answer-input:focus { outline: none; border-color: #00ff88; }
+  
+  .feedback {
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+    text-align: center;
+    font-size: 1.3em;
+    font-weight: bold;
+    display: none;
+  }
+  .feedback.correct {
+    background: rgba(76, 175, 80, 0.3);
+    border: 3px solid #4CAF50;
+    color: #4CAF50;
+    display: block;
+    animation: correctAnim 0.5s;
+  }
+  .feedback.wrong {
+    background: rgba(244, 67, 54, 0.3);
+    border: 3px solid #f44336;
+    color: #f44336;
+    display: block;
+    animation: wrongAnim 0.5s;
+  }
+  @keyframes correctAnim { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+  @keyframes wrongAnim { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+  
+  .progress-bar {
+    background: rgba(0, 212, 255, 0.1);
+    border: 2px solid #00d4ff;
+    border-radius: 10px;
+    height: 25px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    background: linear-gradient(90deg, #00d4ff, #00ff88);
+    height: 100%;
+    transition: width 0.5s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000;
+    font-weight: bold;
+  }
+  
+  .result-panel {
+    background: rgba(0, 212, 255, 0.1);
+    border: 2px solid #00d4ff;
+    border-radius: 15px;
+    padding: 30px;
+    text-align: center;
+  }
+  .result-icon { font-size: 5em; margin-bottom: 15px; }
+  .result-score { font-size: 3em; font-weight: bold; color: #FFD54F; margin: 20px 0; }
+  .result-message {
+    font-size: 1.3em;
+    color: #a0d4ff;
+    margin: 15px 0;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+  }
+  
+  .teacher-panel {
+    background: rgba(255, 213, 79, 0.1);
+    border: 2px solid #FFD54F;
+    border-radius: 15px;
+    padding: 30px;
+    margin-top: 20px;
+  }
+  .teacher-panel h2 { color: #FFD54F; margin-bottom: 20px; }
+  .results-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+  .results-table th, .results-table td { border: 1px solid #FFD54F; padding: 12px; text-align: left; }
+  .results-table th { background: rgba(255, 213, 79, 0.3); color: #FFD54F; }
+  .results-table tr:nth-child(even) { background: rgba(255, 213, 79, 0.1); }
+  
+  @media (max-width: 768px) {
+    .game-header { grid-template-columns: 1fr; }
+    .level-info { grid-template-columns: 1fr; }
+    h1 { font-size: 1.6em; }
+  }
+</style>
+</head>
+<body>
+<div class="stars"></div>
+<div class="container">
+  <h1> ЛАБОРАТОРИЯ КПД</h1>
+  <p class="subtitle">Физика 8 класс | Тепловые двигатели</p>
+  
+  <!-- Стартовый экран -->
+  <div class="screen active" id="startScreen">
+    <div class="start-panel">
+      <div style="font-size: 4em; margin-bottom: 15px;">️</div>
+      <h2 style="color: #00d4ff; margin-bottom: 15px;">Инженерное испытание</h2>
+      
+      <div class="level-info">
+        <div class="level-card level-a">
+          <h3>Уровень A</h3>
+          <p>Базовая задача<br>Прямое применение формулы</p>
+          <div class="points">1 балл</div>
+        </div>
+        <div class="level-card level-b">
+          <h3>Уровень B</h3>
+          <p>Задача средней сложности<br>Обратные вычисления</p>
+          <div class="points">2 балла</div>
+        </div>
+        <div class="level-card level-c">
+          <h3>Уровень C</h3>
+          <p>Повышенная сложность<br>Комплексная задача</p>
+          <div class="points">3 балла</div>
+        </div>
+      </div>
+      
+      <div class="input-group" style="max-width: 400px; margin: 20px auto;">
+        <label>👨‍ Ваше имя:</label>
+        <input type="text" id="studentName" placeholder="Введите имя...">
+      </div>
+      
+      <button class="btn" onclick="startGame()"> Начать испытание</button>
+      <button class="btn btn-teacher" onclick="showTeacherLogin()">👨‍🏫 Панель учителя</button>
+      
+      <div style="margin-top: 25px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 10px;">
+        <p style="color: #a0d4ff;"><b>📋 Правила:</b></p>
+        <ul style="text-align: left; margin: 10px 0 0 20px; color: #a0d4ff;">
+          <li>3 задачи разного уровня сложности</li>
+          <li>Время на выполнение: 6 минут</li>
+          <li>Можно использовать калькулятор</li>
+          <li>Уровень A = 1 балл, B = 2 балла, C = 3 балла</li>
+          <li>Максимальный результат: 6 баллов</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Игровой экран -->
+  <div class="screen" id="gameScreen">
+    <div class="game-header">
+      <div class="stat-box" id="timerBox">
+        <div class="stat-label">⏱️ Время</div>
+        <div class="stat-value" id="timer">06:00</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">📊 Задача</div>
+        <div class="stat-value" id="taskNum">1/3</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">⭐ Баллы</div>
+        <div class="stat-value" id="score">0</div>
+      </div>
+    </div>
+    
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressBar" style="width: 0%">0%</div>
+    </div>
+    
+    <div class="task-container">
+      <div class="task-header">
+        <div class="task-number" id="taskNumber">Задача 1</div>
+        <div class="task-level" id="taskLevel">A</div>
+      </div>
+      
+      <div class="task-text" id="taskText">Загрузка задачи...</div>
+      
+      <div class="formula-box">
+        <b>💡 Формула:</b><br>
+        <span class="formula" id="formulaText"></span>
+      </div>
+      
+      <div style="margin: 15px 0;">
+        <label style="color: #00d4ff; display: block; margin-bottom: 8px;">Ваш ответ:</label>
+        <input type="text" class="answer-input" id="answerInput" placeholder="Введите числовой ответ...">
+      </div>
+      
+      <div class="feedback" id="feedback"></div>
+      
+      <div style="text-align: center; margin-top: 20px;">
+        <button class="btn" onclick="checkAnswer()" style="background: linear-gradient(135deg, #00ff88, #00cc66);" id="checkBtn">✓ Проверить ответ</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Экран результатов -->
+  <div class="screen" id="resultScreen">
+    <div class="result-panel">
+      <div class="result-icon" id="resultIcon">🏆</div>
+      <h2 style="color: #00d4ff; margin-bottom: 15px;">ИСПЫТАНИЕ ЗАВЕРШЕНО!</h2>
+      <div style="color: #a0d4ff; font-size: 1.2em; margin-bottom: 10px;">Инженер: <b id="resultName" style="color: #fff;"></b></div>
+      <div class="result-score"><span id="scoreValue">0</span> из 6 баллов</div>
+      <div class="result-message" id="resultMessage"></div>
+      <button class="btn" onclick="location.reload()" style="margin-top: 20px;">🔄 Пройти заново</button>
+    </div>
+  </div>
+
+  <!-- Панель учителя -->
+  <div class="screen" id="teacherScreen">
+    <div class="teacher-panel">
+      <h2>👨🏫 ПАНЕЛЬ УЧИТЕЛЯ</h2>
+      <div id="teacherContent">
+        <div class="input-group" style="max-width: 400px; margin: 20px auto;">
+          <label> Введите пароль:</label>
+          <input type="password" id="teacherPassword" placeholder="Пароль...">
+        </div>
+        <button class="btn btn-teacher" onclick="checkTeacherPassword()">Войти</button>
+        <p style="color: #a0d4ff; margin-top: 15px; font-size: 0.9em;">Пароль по умолчанию: teacher123</p>
+      </div>
+      <div id="teacherResults" style="display: none;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const TEACHER_PASSWORD = 'teacher123';
+
+function playCorrectSound() {
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  oscillator.connect(gainNode); gainNode.connect(audioContext.destination);
+  oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime);
+  oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1);
+  oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2);
+  gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+  oscillator.start(audioContext.currentTime); oscillator.stop(audioContext.currentTime + 0.5);
+}
+
+function playWrongSound() {
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  oscillator.connect(gainNode); gainNode.connect(audioContext.destination);
+  oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+  oscillator.frequency.setValueAtTime(150, audioContext.currentTime + 0.2);
+  gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+  oscillator.start(audioContext.currentTime); oscillator.stop(audioContext.currentTime + 0.4);
+}
+
+// ОСТАЛОСЬ ТОЛЬКО 3 ЗАДАЧИ (A, B, C)
+const tasks = [
+  {
+    level: 'A', number: 1, points: 1,
+    text: 'Тепловой двигатель получил от нагревателя Q₁ = 500 Дж и отдал холодильнику Q₂ = 300 Дж. Чему равен КПД двигателя?',
+    formula: 'η = (Q₁ - Q₂) / Q₁ × 100%',
+    answer: 40, unit: '%'
+  },
+  {
+    level: 'B', number: 2, points: 2,
+    text: 'КПД теплового двигателя равен 40%. Какую полезную работу совершит двигатель, если при сгорании топлива выделится 200 МДж энергии?',
+    formula: 'A = η × Q',
+    answer: 80, unit: 'МДж'
+  },
+  {
+    level: 'C', number: 3, points: 3,
+    text: 'Двигатель автомобиля расходует 8 литров бензина на 100 км пути. Удельная теплота сгорания бензина 46 МДж/кг, плотность 750 кг/м³. КПД двигателя 25%. Какую полезную работу совершает двигатель на 100 км пути?',
+    formula: 'A = η × Q, где Q = m × q',
+    answer: 69, unit: 'МДж'
+  }
+];
+
+let currentTask = 0;
+let score = 0;
+let timeLeft = 360; // 6 минут
+let timerInterval;
+let studentName = '';
+let answers = [];
+
+function startGame() {
+  const nameInput = document.getElementById('studentName');
+  if (nameInput.value.trim() === '') { alert('️ Введите ваше имя!'); return; }
+  studentName = nameInput.value.trim();
+  document.getElementById('startScreen').classList.remove('active');
+  document.getElementById('gameScreen').classList.add('active');
+  startTimer();
+  showTask();
+}
+
+function startTimer() {
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimerDisplay();
+    if (timeLeft <= 60) document.getElementById('timerBox').classList.add('warning');
+    if (timeLeft <= 0) finishGame();
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const minutes = Math.floor(timeLeft / 60);
+  const seconds = timeLeft % 60;
+  document.getElementById('timer').textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function showTask() {
+  const task = tasks[currentTask];
+  document.getElementById('taskNum').textContent = `${currentTask + 1}/${tasks.length}`;
+  document.getElementById('taskNumber').textContent = `Задача ${task.number}`;
+  document.getElementById('taskLevel').textContent = `Уровень ${task.level} (${task.points} бал.)`;
+  document.getElementById('taskLevel').className = `task-level ${task.level.toLowerCase()}`;
+  document.getElementById('taskText').textContent = task.text;
+  document.getElementById('formulaText').textContent = task.formula;
+  document.getElementById('answerInput').value = '';
+  document.getElementById('feedback').style.display = 'none';
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('checkBtn').disabled = false;
+  
+  const progress = (currentTask / tasks.length) * 100;
+  document.getElementById('progressBar').style.width = progress + '%';
+  document.getElementById('progressBar').textContent = Math.round(progress) + '%';
+}
+
+function checkAnswer() {
+  const input = document.getElementById('answerInput').value.trim();
+  if (input === '') { alert('⚠️ Введите ответ!'); return; }
+  
+  const userAnswer = parseFloat(input.replace(',', '.'));
+  const task = tasks[currentTask];
+  const tolerance = Math.abs(task.answer * 0.02); // 2% погрешность
+  const isCorrect = Math.abs(userAnswer - task.answer) <= tolerance;
+  
+  answers.push({ task: task, userAnswer: userAnswer, correct: isCorrect });
+  const feedback = document.getElementById('feedback');
+  
+  if (isCorrect) {
+    score += task.points; // Добавляем баллы в зависимости от уровня
+    document.getElementById('score').textContent = score;
+    feedback.className = 'feedback correct';
+    feedback.innerHTML = `✓ ПРАВИЛЬНО! (+${task.points} бал.)<br>Ответ: ${task.answer} ${task.unit}`;
+    playCorrectSound();
+  } else {
+    feedback.className = 'feedback wrong';
+    feedback.innerHTML = `✗ НЕВЕРНО<br>Ваш ответ: ${userAnswer} ${task.unit}<br>Правильный ответ: ${task.answer} ${task.unit}`;
+    playWrongSound();
+  }
+  
+  document.getElementById('checkBtn').disabled = true;
+  
+  setTimeout(() => {
+    currentTask++;
+    if (currentTask < tasks.length) showTask();
+    else finishGame();
+  }, 2500);
+}
+
+function finishGame() {
+  clearInterval(timerInterval);
+  const results = JSON.parse(localStorage.getItem('kpdResults') || '[]');
+  results.push({ name: studentName, score: score, total: 6, answers: answers, timeSpent: 360 - timeLeft, timestamp: new Date().toLocaleString('ru-RU') });
+  localStorage.setItem('kpdResults', JSON.stringify(results));
+  
+  document.getElementById('gameScreen').classList.remove('active');
+  document.getElementById('resultScreen').classList.add('active');
+  document.getElementById('resultName').textContent = studentName;
+  document.getElementById('scoreValue').textContent = score;
+  
+  let icon, message;
+  if (score === 6) { icon = '🏆'; message = 'Великолепно! Максимальный результат! Вы настоящий эксперт по КПД!'; } 
+  else if (score >= 4) { icon = '🌟'; message = 'Отличный результат! Вы хорошо усвоили тему КПД!'; } 
+  else if (score >= 2) { icon = '👍'; message = 'Хороший результат! Но есть куда расти. Повторите формулы.'; } 
+  else { icon = '💪'; message = 'Не расстраивайтесь! Изучите формулу КПД и попробуйте снова!'; }
+  
+  document.getElementById('resultIcon').textContent = icon;
+  document.getElementById('resultMessage').textContent = message;
+}
+
+function showTeacherLogin() {
+  document.getElementById('startScreen').classList.remove('active');
+  document.getElementById('teacherScreen').classList.add('active');
+}
+
+function checkTeacherPassword() {
+  const password = document.getElementById('teacherPassword').value;
+  if (password === TEACHER_PASSWORD) showTeacherResults();
+  else alert(' Неверный пароль!');
+}
+
+function showTeacherResults() {
+  const results = JSON.parse(localStorage.getItem('kpdResults') || '[]');
+  document.getElementById('teacherContent').style.display = 'none';
+  const teacherResults = document.getElementById('teacherResults');
+  teacherResults.style.display = 'block';
+  
+  if (results.length === 0) {
+    teacherResults.innerHTML = '<p style="color: #a0d4ff; text-align: center; font-size: 1.2em;">Пока нет результатов</p>';
+    return;
+  }
+  
+  let html = '<h3 style="color: #00d4ff; margin-bottom: 20px;">📊 Результаты участников (Макс. 6 баллов)</h3>';
+  html += '<table class="results-table"><tr><th>№</th><th>Имя</th><th>Балл</th><th>Время (сек)</th><th>Дата</th></tr>';
+  results.forEach((result, index) => {
+    html += `<tr><td>${index + 1}</td><td><b>${result.name}</b></td><td>${result.score}/${result.total}</td><td>${result.timeSpent}</td><td>${result.timestamp}</td></tr>`;
+  });
+  html += '</table>';
+  
+  const avgScore = (results.reduce((sum, r) => sum + r.score, 0) / results.length).toFixed(1);
+  html += '<div style="margin-top: 30px; padding: 20px; background: rgba(0,0,0,0.3); border-radius: 10px;">';
+  html += `<h3 style="color: #FFD54F; margin-bottom: 15px;">📈 Статистика</h3>`;
+  html += `<p style="color: #a0d4ff; margin: 10px 0;"><b>Всего участников:</b> ${results.length}</p>`;
+  html += `<p style="color: #a0d4ff; margin: 10px 0;"><b>Средний балл:</b> ${avgScore} из 6</p>`;
+  html += '</div>';
+  
+  html += '<button class="btn" onclick="clearResults()" style="margin-top: 20px; background: linear-gradient(135deg, #f44336, #d32f2f);">🗑️ Очистить результаты</button>';
+  html += '<button class="btn" onclick="location.reload()" style="margin-top: 20px;">← Назад</button>';
+  teacherResults.innerHTML = html;
+}
+
+function clearResults() {
+  if (confirm('⚠️ Вы уверены, что хотите удалить ВСЕ результаты?')) {
+    localStorage.removeItem('kpdResults');
+    alert('✅ Все результаты удалены!');
+    location.reload();
+  }
+}
+
+document.getElementById('studentName').addEventListener('keypress', function(e) { if (e.key === 'Enter') startGame(); });
+document.getElementById('answerInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') checkAnswer(); });
+document.getElementById('teacherPassword').addEventListener('keypress', function(e) { if (e.key === 'Enter') checkTeacherPassword(); });
+</script>
+</body>
+</html>
